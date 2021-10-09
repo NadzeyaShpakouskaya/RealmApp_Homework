@@ -15,6 +15,7 @@ class StorageManager {
     private init() {}
     
     // MARK: - TaskList
+    
     func save(_ taskLists: [TaskList]) {
         write {
             realm.add(taskLists)
@@ -52,6 +53,39 @@ class StorageManager {
             taskList.tasks.append(task)
         }
     }
+    
+    func delete(_ task: Task) {
+        write {
+            realm.delete(task)
+        }
+    }
+    
+    func edit(_ task: Task, newValue: String, newNote: String) {
+        write {
+            task.name = newValue
+            task.note = newNote
+        }
+    }
+    
+    func done(_ task: Task) {
+        write {
+            task.setValue(true, forKey: "isComplete")
+        }
+    }
+    
+    func toggleTaskToComplete(_ task: Task) {
+        if task.isComplete {
+            write {
+                task.setValue(false, forKey: "isComplete")
+            }
+        } else {
+            write {
+                task.setValue(true, forKey: "isComplete")
+            }
+        }
+    }
+    
+        // MARK: - Private methods
     
     private func write(completion: () -> Void) {
         do {

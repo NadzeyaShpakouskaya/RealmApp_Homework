@@ -11,8 +11,10 @@ import UIKit
 
 class TaskListViewController: UITableViewController {
     
+    // MARK: - Private methods
     private var taskLists: Results<TaskList>!
     
+    // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         createTempData()
@@ -36,9 +38,21 @@ class TaskListViewController: UITableViewController {
         let taskList = taskLists[indexPath.row]
         var content = cell.defaultContentConfiguration()
         content.text = taskList.name
-        content.secondaryText = "\(taskList.tasks.count)"
+        content.secondaryText = numberOfTasks(for: taskList)
         cell.contentConfiguration = content
         return cell
+    }
+    
+    
+    private func numberOfTasks(for taskList: TaskList) -> String {
+        return taskList.tasks.isEmpty ? "0" : numberOfUncompletedTasks(for: taskList)
+    }
+    
+    private func numberOfUncompletedTasks(for taskList: TaskList) -> String {
+        let allTasks = taskList.tasks.count
+        let completedTasks = taskList.tasks.filter("isComplete = true").count
+        let number = allTasks - completedTasks
+        return  number == 0 ? "✔︎" : "\(number)"
     }
     
     // MARK: - UITableViewDelegate
@@ -70,18 +84,22 @@ class TaskListViewController: UITableViewController {
         return UISwipeActionsConfiguration(actions: [doneAction, editAction, deleteAction])
     }
     
+    // MARK: - Navigation
+    
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         guard let indexPath = tableView.indexPathForSelectedRow else { return }
         guard let tasksVC = segue.destination as? TasksViewController else { return }
         let taskList = taskLists[indexPath.row]
         tasksVC.taskList = taskList
     }
-
+    
+    // MARK: - IBActions
     @IBAction func  addButtonPressed(_ sender: Any) {
         showAlert()
     }
     
     @IBAction func sortingList(_ sender: UISegmentedControl) {
+        
     }
     
     
@@ -93,6 +111,7 @@ class TaskListViewController: UITableViewController {
     }
 }
 
+// MARK: - AlertController Implementation
 extension TaskListViewController {
     
     private func showAlert(with taskList: TaskList? = nil, completion: (() -> Void)? = nil) {
