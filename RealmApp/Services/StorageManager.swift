@@ -66,13 +66,7 @@ class StorageManager {
             task.note = newNote
         }
     }
-    
-    func done(_ task: Task) {
-        write {
-            task.setValue(true, forKey: "isComplete")
-        }
-    }
-    
+
     func toggleTaskToComplete(_ task: Task) {
         if task.isComplete {
             write {

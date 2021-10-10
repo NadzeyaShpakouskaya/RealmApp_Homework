@@ -9,23 +9,19 @@
 import RealmSwift
 
 class TasksViewController: UITableViewController {
-    
+        // MARK: - Public properties
     var taskList: TaskList!
     
+        // MARK: - Private properties
     private var currentTasks: Results<Task>!
     private var completedTasks: Results<Task>!
     
+        // MARK: - Lifecycle
+
     override func viewDidLoad() {
         super.viewDidLoad()
-        title = taskList.name
-        fetchTaskCompletion()
-        
-        let addButton = UIBarButtonItem(
-            barButtonSystemItem: .add,
-            target: self,
-            action: #selector(addButtonPressed)
-        )
-        navigationItem.rightBarButtonItems = [addButton, editButtonItem]
+        prepareUI()
+        prepareData()
     }
     
     // MARK: - Table view data source
@@ -69,7 +65,7 @@ class TasksViewController: UITableViewController {
         }
         
         let editAction = UIContextualAction(style: .normal, title: "Edit") { _, _, isDone in
-            self.showAlert(with: task) {
+            self.showAlert(task) {
                 tableView.reloadRows(at: [indexPath], with: .automatic)
             }
             isDone(true)
@@ -99,9 +95,24 @@ class TasksViewController: UITableViewController {
         
     }
     
+    private func prepareUI() {
+        title = taskList.name
+        
+        let addButton = UIBarButtonItem(
+            barButtonSystemItem: .add,
+            target: self,
+            action: #selector(addButtonPressed)
+        )
+        navigationItem.rightBarButtonItems = [addButton, editButtonItem]
+    }
+    
+    private func prepareData() {
+        currentTasks = taskList.tasks.filter("isComplete = false")
+        completedTasks = taskList.tasks.filter("isComplete = true")
+    }
+    
     private func moveTask(_ task: Task, from indexPath: IndexPath) {
         StorageManager.shared.toggleTaskToComplete(task)
-        fetchTaskCompletion()
         
         let destination = indexPath.section == 0 ?
         IndexPath(row: self.completedTasks.count - 1, section: 1) :
@@ -109,33 +120,36 @@ class TasksViewController: UITableViewController {
         
         tableView.moveRow(at: indexPath, to: destination)
     }
-    
-    
-    
-    private func fetchTaskCompletion() {
-        currentTasks = taskList.tasks.filter("isComplete = false")
-        completedTasks = taskList.tasks.filter("isComplete = true")
-    }
 }
 
+    // MARK: - AlertController Usage
 extension TasksViewController {
     
-    private func showAlert(with task: Task? = nil, completion: (() -> Void)? = nil) {
-        if let task = task,  let completion = completion {
-            let alert = AlertController.createAlert(withTitle: "Change Task", andMessage: "What do you want to do?")
-            alert.action(with: task) {value, note in
-                StorageManager.shared.edit(task, newValue: value, newNote: note)
-                completion()
-            }
-            present(alert, animated: true)
-        } else {
-            let alert = AlertController.createAlert(withTitle: "New Task", andMessage: "What do you want to do?")
+    private func showAlert(_ task: Task? = nil, completion: (() -> Void)? = nil) {
+        guard let task = task, let completion = completion else {
+            let alert = AlertController.createAlert(
+                withTitle: "New Task",
+                andMessage: "What do you want to do?"
+            )
+            
             alert.action(with: nil) { newValue, note in
                 self.saveTask(withName: newValue, andNote: note)
             }
             
             present(alert, animated: true)
+            return
         }
+        
+        let alert = AlertController.createAlert(
+            withTitle: "Change Task",
+            andMessage: "Update task description"
+        )
+        
+        alert.action(with: task) {value, note in
+            StorageManager.shared.edit(task, newValue: value, newNote: note)
+            completion()
+        }
+        present(alert, animated: true)
     }
     
     private func saveTask(withName name: String, andNote note: String) {

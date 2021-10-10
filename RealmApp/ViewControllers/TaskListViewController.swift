@@ -38,21 +38,9 @@ class TaskListViewController: UITableViewController {
         let taskList = taskLists[indexPath.row]
         var content = cell.defaultContentConfiguration()
         content.text = taskList.name
-        content.secondaryText = numberOfTasks(for: taskList)
+        content.secondaryAttributedText = descriptionNumberOfTasks(for: taskList)
         cell.contentConfiguration = content
         return cell
-    }
-    
-    
-    private func numberOfTasks(for taskList: TaskList) -> String {
-        return taskList.tasks.isEmpty ? "0" : numberOfUncompletedTasks(for: taskList)
-    }
-    
-    private func numberOfUncompletedTasks(for taskList: TaskList) -> String {
-        let allTasks = taskList.tasks.count
-        let completedTasks = taskList.tasks.filter("isComplete = true").count
-        let number = allTasks - completedTasks
-        return  number == 0 ? "✔︎" : "\(number)"
     }
     
     // MARK: - UITableViewDelegate
@@ -104,9 +92,24 @@ class TaskListViewController: UITableViewController {
         taskLists.sorted(byKeyPath: "name")
         tableView.reloadData()
     }
+         // MARK: - Private methods
     
-    
-    
+    private func descriptionNumberOfTasks(for taskList: TaskList) -> NSAttributedString {
+        if !taskList.tasks.isEmpty {
+            let allTasks = taskList.tasks.count
+            let completedTasks = taskList.tasks.filter("isComplete = true").count
+            
+            let text = NSAttributedString(string: "\(allTasks - completedTasks)")
+            let completed = NSAttributedString(
+                string: "✔︎",
+                attributes: [.foregroundColor: UIColor.systemBlue]
+            )
+            return completedTasks == allTasks  ? completed : text
+        } else {
+            return NSAttributedString(string: "0")
+        }
+    }
+
     private func createTempData() {
         DataManager.shared.createTempData {
             self.tableView.reloadData()
