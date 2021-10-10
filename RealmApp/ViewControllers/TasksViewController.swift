@@ -18,8 +18,7 @@ class TasksViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         title = taskList.name
-        currentTasks = taskList.tasks.filter("isComplete = false")
-        completedTasks = taskList.tasks.filter("isComplete = true")
+        fetchTaskCompletion()
         
         let addButton = UIBarButtonItem(
             barButtonSystemItem: .add,
@@ -57,6 +56,10 @@ class TasksViewController: UITableViewController {
     }
     
     // MARK: - UITableViewDelegate
+    override func tableView(_ tableView: UITableView, canMoveRowAt indexPath: IndexPath) -> Bool {
+        true
+    }
+    
     override func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
         let task = indexPath.section == 0 ? currentTasks[indexPath.row] : completedTasks[indexPath.row]
         
@@ -73,20 +76,18 @@ class TasksViewController: UITableViewController {
         }
         
         let doneAction = UIContextualAction(style: .normal, title: "Done") {_, _, isDone in
-            StorageManager.shared.toggleTaskToComplete(task)
-            tableView.reloadData()
+            self.moveTask(task, from: indexPath)
             isDone(true)
             
         }
         
-        let undoneAction = UIContextualAction(style: .normal, title: "Unone") {_, _, isDone in
-            StorageManager.shared.toggleTaskToComplete(task)
-            tableView.reloadData()
+        let undoneAction = UIContextualAction(style: .normal, title: "Undone") {_, _, isDone in
+            self.moveTask(task, from: indexPath)
             isDone(true)
         }
         
         editAction.backgroundColor = .orange
-        doneAction.backgroundColor = #colorLiteral(red: 0.3411764801, green: 0.6235294342, blue: 0.1686274558, alpha: 1)
+        doneAction.backgroundColor = .systemGreen
         undoneAction.backgroundColor = .blue
         
         let actions = indexPath.section == 0 ?
@@ -98,27 +99,27 @@ class TasksViewController: UITableViewController {
         
     }
     
+    private func moveTask(_ task: Task, from indexPath: IndexPath) {
+        StorageManager.shared.toggleTaskToComplete(task)
+        fetchTaskCompletion()
+        
+        let destination = indexPath.section == 0 ?
+        IndexPath(row: self.completedTasks.count - 1, section: 1) :
+        IndexPath(row: self.currentTasks.count - 1, section: 0)
+        
+        tableView.moveRow(at: indexPath, to: destination)
+    }
+    
+    
     
     private func fetchTaskCompletion() {
         currentTasks = taskList.tasks.filter("isComplete = false")
         completedTasks = taskList.tasks.filter("isComplete = true")
-        tableView.reloadData()
     }
 }
 
 extension TasksViewController {
     
-    //    private func showAlert() {
-    //
-    //        let alert = AlertController.createAlert(withTitle: "New Task", andMessage: "What do you want to do?")
-    //
-    //        alert.action { newValue, note in
-    //            self.saveTask(withName: newValue, andNote: note)
-    //        }
-    //
-    //        present(alert, animated: true)
-    //    }
-    //
     private func showAlert(with task: Task? = nil, completion: (() -> Void)? = nil) {
         if let task = task,  let completion = completion {
             let alert = AlertController.createAlert(withTitle: "Change Task", andMessage: "What do you want to do?")
