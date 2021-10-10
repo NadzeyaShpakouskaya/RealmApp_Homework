@@ -9,15 +9,14 @@
 import RealmSwift
 
 class TasksViewController: UITableViewController {
-        // MARK: - Public properties
+    // MARK: - Public properties
     var taskList: TaskList!
     
-        // MARK: - Private properties
+    // MARK: - Private properties
     private var currentTasks: Results<Task>!
     private var completedTasks: Results<Task>!
     
-        // MARK: - Lifecycle
-
+    // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         prepareUI()
@@ -72,13 +71,13 @@ class TasksViewController: UITableViewController {
         }
         
         let doneAction = UIContextualAction(style: .normal, title: "Done") {_, _, isDone in
-            self.moveTask(task, from: indexPath)
+            self.move(task, from: indexPath)
             isDone(true)
             
         }
         
         let undoneAction = UIContextualAction(style: .normal, title: "Undone") {_, _, isDone in
-            self.moveTask(task, from: indexPath)
+            self.move(task, from: indexPath)
             isDone(true)
         }
         
@@ -91,10 +90,9 @@ class TasksViewController: UITableViewController {
         [undoneAction, editAction, deleteAction]
         
         return UISwipeActionsConfiguration(actions: actions)
-        
-        
     }
     
+    // MARK: - Private methods
     private func prepareUI() {
         title = taskList.name
         
@@ -111,18 +109,18 @@ class TasksViewController: UITableViewController {
         completedTasks = taskList.tasks.filter("isComplete = true")
     }
     
-    private func moveTask(_ task: Task, from indexPath: IndexPath) {
-        StorageManager.shared.toggleTaskToComplete(task)
+    private func move(_ task: Task, from indexPath: IndexPath) {
+        StorageManager.shared.toggleCompletionOf(task)
         
         let destination = indexPath.section == 0 ?
-        IndexPath(row: self.completedTasks.count - 1, section: 1) :
-        IndexPath(row: self.currentTasks.count - 1, section: 0)
+        IndexPath(row: completedTasks.count - 1, section: 1) :
+        IndexPath(row: currentTasks.count - 1, section: 0)
         
         tableView.moveRow(at: indexPath, to: destination)
     }
 }
 
-    // MARK: - AlertController Usage
+// MARK: - AlertController Usage
 extension TasksViewController {
     
     private func showAlert(_ task: Task? = nil, completion: (() -> Void)? = nil) {

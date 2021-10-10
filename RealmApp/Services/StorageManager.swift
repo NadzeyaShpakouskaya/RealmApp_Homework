@@ -67,7 +67,7 @@ class StorageManager {
         }
     }
 
-    func toggleTaskToComplete(_ task: Task) {
+    func toggleCompletionOf(_ task: Task) {
         if task.isComplete {
             write {
                 task.setValue(false, forKey: "isComplete")
